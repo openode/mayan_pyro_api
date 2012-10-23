@@ -42,7 +42,7 @@ class DocumentAPI(object):
 
     ###################################
 
-    def retrive_plaintext(self, uuid):
+    def retrive_plaintext(self, uuid, page=None):
         """
             @return: list of thumbnail's content of document's all pages
         """
@@ -52,7 +52,13 @@ class DocumentAPI(object):
             return ""
 
         content = []
-        for page in document.pages.iterator():
+        
+        if page:
+            pages_qs = document.pages.filter(page_number=page)
+        else:
+            pages_qs = document.pages.all()
+         
+        for page in pages_qs.iterator():
             if not page.content:
                 continue
             content.append("\n%s" % page.content)
