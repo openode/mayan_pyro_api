@@ -112,11 +112,13 @@ class DocumentAPI(object):
         finally:
             output_descriptor.close()
 
+        pages_count = document.pages.count()
+
         self.logger.info("Document created: %s" % repr({
             "uuid": uuid,
             "document": document.pk,
             "version": new_version.pk,
-            "pages": document.pages.count(),
+            "pages": pages_count,
             "size": self.get_file_size(tmp_path),
         }))
 
@@ -133,7 +135,8 @@ class DocumentAPI(object):
         status.update({
             "document_id": document.pk,
             "success": True,
-            "uuid": document.uuid
+            "uuid": document.uuid,
+            "pages": pages_count,
         })
         return status
 
