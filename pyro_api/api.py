@@ -38,13 +38,22 @@ class DocumentAPI(object):
         try:
             document = Document.objects.get(uuid=uuid)
         except Document.DoesNotExist:
+            self.logger.info("Not found %s: %s" % (uuid, page))
             return None
 
         try:
             document.get_image_cache_name(page, document.latest_version_id)
-            return open(document.get_image(page=page)).read()
+            img_path = document.get_image(page=page)
+            self.logger.info(
+                "Load file %s | exist: %s" % (
+                    img_path,
+                    os.path.exists(img_path)
+                )
+            )
+            return open(img_path).read()
         except Exception, e:
-            return str(e)
+            self.logger.error("Error %s" % (e))
+            return None
 
     ###################################
 
