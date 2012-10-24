@@ -43,8 +43,8 @@ class DocumentAPI(object):
         try:
             document.get_image_cache_name(page, document.latest_version_id)
             return open(document.get_image(page=page)).read()
-        except Exception:
-            return None
+        except Exception, e:
+            return str(e)
 
     ###################################
 
