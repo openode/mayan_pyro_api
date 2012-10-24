@@ -42,14 +42,8 @@ class DocumentAPI(object):
             return None
 
         try:
-            document.get_image_cache_name(page, document.latest_version.pk)
+            document.get_image_cache_name(page, document.latest_versionsmirim.pk)
             img_path = document.get_image(page=page)
-            self.logger.info(
-                "Load file %s | exist: %s" % (
-                    img_path,
-                    os.path.exists(img_path)
-                )
-            )
             return open(img_path).read()
         except Exception, e:
             self.logger.error("Error %s" % (e))
