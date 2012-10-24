@@ -34,30 +34,36 @@ class DocumentAPI(object):
         """
             @return: list of thumbnail's content of document's all pages
         """
+
         try:
             document = Document.objects.get(uuid=uuid)
         except Document.DoesNotExist:
-            return []
-        return open(document.get_image(page=page)).read()
+            return None
+
+        try:
+            document.get_image_cache_name(page, document.latest_version_id)
+            return open(document.get_image(page=page)).read()
+        except Exception:
+            return None
 
     ###################################
 
-    def retrive_plaintext(self, uuid, page=None):
+    def retrive_plaintext(self, uuid, page=None, default=""):
         """
             @return: list of thumbnail's content of document's all pages
         """
         try:
             document = Document.objects.get(uuid=uuid)
         except Document.DoesNotExist:
-            return ""
+            return default
 
         content = []
-        
+
         if page:
             pages_qs = document.pages.filter(page_number=page)
         else:
             pages_qs = document.pages.all()
-         
+
         for page in pages_qs.iterator():
             if not page.content:
                 continue
