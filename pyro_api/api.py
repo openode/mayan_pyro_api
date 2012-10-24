@@ -68,7 +68,7 @@ class DocumentAPI(object):
             if not page.content:
                 continue
             content.append("\n%s" % page.content)
-        return u''.join(content)
+        return u''.join(content) or default
 
     ###################################
 
