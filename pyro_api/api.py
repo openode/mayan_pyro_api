@@ -128,14 +128,15 @@ class DocumentAPI(object):
             output_descriptor.close()
 
         pages_count = document.pages.count()
-
-        self.logger.info("Document created: %s" % repr({
-            "uuid": uuid,
+        size = self.get_file_size(tmp_path)
+        ret = {
+            "uuid": document.uuid,
             "document": document.pk,
             "version": new_version.pk,
             "pages": pages_count,
-            "size": self.get_file_size(tmp_path),
-        }))
+            "size": size,
+        }
+        self.logger.info("Document created: %s" % repr(ret))
 
         # transform new document
         transformations, errors = SourceTransformation.transformations.get_for_object_as_list(document)
@@ -147,12 +148,11 @@ class DocumentAPI(object):
         except OSError:
             pass
 
+        status.update(ret)
         status.update({
-            "document_id": document.pk,
             "success": True,
-            "uuid": document.uuid,
-            "pages": pages_count,
         })
+
         return status
 
     ###################################
