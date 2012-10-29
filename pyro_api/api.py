@@ -92,7 +92,6 @@ class DocumentAPI(object):
 
         status = {
             "success": False,
-            "document_id": None,
             "uuid": "",
         }
 
