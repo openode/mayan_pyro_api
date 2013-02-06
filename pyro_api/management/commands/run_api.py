@@ -29,8 +29,6 @@ class Command(NoArgsCommand):
         from pyro_api.api import DocumentAPI
 
         daemon = Pyro4.Daemon(port=URI_PORT, host=SERVER_IP)
-        # ns = Pyro4.locateNS()  # DEPRECATED
         uri = daemon.register(DocumentAPI(), URI_ID)
-        # ns.register(DAEMON_NAME, uri)  # DEPRECATED
         logger.info("Connected to Pyro NameServer %s" % uri)
         daemon.requestLoop()
