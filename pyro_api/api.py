@@ -22,11 +22,17 @@ class DocumentAPI(object):
 
     def __init__(self):
         self.logger = logging.getLogger("api")
+        self.files = {}
 
     ###################################
 
     def ping(self):
         return "pong"
+
+    def clean_file(self, uuid, page):
+        key = "%s_%s" % (uuid, page)
+        self.files[key].flush()
+        del self.files[key]
 
     ###################################
 
@@ -35,7 +41,7 @@ class DocumentAPI(object):
             @return: list of thumbnail's content of document's all pages
         """
 
-        return None
+        key = "%s_%s" % (uuid, page)
 
         try:
             document = Document.objects.get(uuid=uuid)
@@ -46,7 +52,10 @@ class DocumentAPI(object):
         try:
             document.get_image_cache_name(page, document.latest_version.pk)
             img_path = document.get_image(page=page)
-            return open(img_path).read()
+
+            self.files[key] = open(img_path)
+            return self.files[key].read()
+
         except Exception, e:
             self.logger.error("Error [%s]: %s" % (type(e), str(e)))
             return None
