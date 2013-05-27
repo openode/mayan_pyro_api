@@ -155,9 +155,11 @@ class DocumentAPI(object):
             # Don't leave the database in a broken state
             # document.delete()
             transaction.rollback()
+            output_descriptor.flush()
             output_descriptor.close()
             return status
         finally:
+            output_descriptor.flush()
             output_descriptor.close()
 
         pages_count = document.pages.count()
