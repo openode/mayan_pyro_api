@@ -118,10 +118,11 @@ class DocumentAPI(object):
                 file=File(output_descriptor, name=uuid)
             )
         except Exception, e:
-            self.logger.error(str(e))
+            self.logger.error("%s: %s" % (type(e), str(e)))
             # Don't leave the database in a broken state
             # document.delete()
             transaction.rollback()
+            output_descriptor.close()
             return status
         finally:
             output_descriptor.close()
