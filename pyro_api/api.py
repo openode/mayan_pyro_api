@@ -35,6 +35,8 @@ class DocumentAPI(object):
             @return: list of thumbnail's content of document's all pages
         """
 
+        return None
+
         try:
             document = Document.objects.get(uuid=uuid)
         except Document.DoesNotExist:
