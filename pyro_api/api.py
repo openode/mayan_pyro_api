@@ -46,7 +46,7 @@ class DocumentAPI(object):
             img_path = document.get_image(page=page)
             return open(img_path).read()
         except Exception, e:
-            self.logger.error("Error %s" % (e))
+            self.logger.error("Error [%s]: %s" % (type(e), str(e)))
             return None
 
     ###################################
