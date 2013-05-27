@@ -49,7 +49,7 @@ class DocumentAPI(object):
         try:
             document.get_image_cache_name(page, document.latest_version.pk)
             img_path = document.get_image(page=page)
-            self.logger.info(img_path)
+            # self.logger.info(img_path)
             return img_path
             # self.files[key] = open(img_path)
             # return self.files[key].read()
