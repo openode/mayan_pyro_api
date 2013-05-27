@@ -33,6 +33,7 @@ class DocumentAPI(object):
         key = "%s_%s" % (uuid, page)
         self.files[key].flush()
         del self.files[key]
+        self.logger.info("Clean file cache: %s" % (key))
 
     ###################################
 
