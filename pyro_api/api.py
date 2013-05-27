@@ -37,6 +37,26 @@ class DocumentAPI(object):
 
     ###################################
 
+    def get_thumbnail_path(self, uuid, page):
+        # key = "%s_%s" % (uuid, page)
+
+        try:
+            document = Document.objects.get(uuid=uuid)
+        except Document.DoesNotExist:
+            self.logger.info("Not found %s: %s" % (uuid, page))
+            return None
+
+        try:
+            document.get_image_cache_name(page, document.latest_version.pk)
+            img_path = document.get_image(page=page)
+            return img_path
+            # self.files[key] = open(img_path)
+            # return self.files[key].read()
+
+        except Exception, e:
+            self.logger.error("Error [%s]: %s" % (type(e), str(e)))
+            return None
+
     def retrive_thumbnails(self, uuid, page):
         """
             @return: list of thumbnail's content of document's all pages
