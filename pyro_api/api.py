@@ -136,12 +136,12 @@ class DocumentAPI(object):
         # create temporary file
         # Transfer file over Pyro is maybe not best idea. Problems can be on large files..
         # If problems, change this method to some better, for example: rsync, scp.
-        handle, tmp_path = tempfile.mkstemp()
-        os.close(handle)
+        # fd, tmp_path = tempfile.mkstemp()
+        # os.close(fd)
+        size = None
+        with tempfile.NamedTemporaryFile() as tmp_file:
 
-        with open(tmp_path, "w+") as tmp_file:
-
-            # tmp_file.write(document)
+            tmp_file.write(document)
 
             # create document in DB
             document = Document.objects.create()
@@ -155,7 +155,6 @@ class DocumentAPI(object):
             # create document version (it create thumbnails, ...)
             try:
                 f = File(tmp_file, name=uuid)
-                f.write(document)
                 new_version = document.new_version(file=f)
                 f.close()
 
@@ -164,16 +163,19 @@ class DocumentAPI(object):
                 # Don't leave the database in a broken state
                 # document.delete()
                 transaction.rollback()
-                tmp_file.flush()
-                tmp_file.close()
+                # tmp_file.flush()
+                # tmp_file.close()
                 return status
 
-            finally:
-                tmp_file.flush()
-                tmp_file.close()
+            # finally:
+            #     tmp_file.flush()
+            #     tmp_file.close()
+
+            if os.path.exists(tmp_file.name):
+                size = self.get_file_size(tmp_file.name)
 
         pages_count = document.pages.count()
-        size = self.get_file_size(tmp_path)
+        # size = self.get_file_size(tmp_path)
         ret = {
             "uuid": document.uuid,
             "document": document.pk,
@@ -188,10 +190,10 @@ class DocumentAPI(object):
         new_version.apply_default_transformations(transformations)
 
         # remove temporary file
-        try:
-            os.remove(tmp_path)
-        except OSError:
-            pass
+        # try:
+        #     os.remove(tmp_path)
+        # except OSError:
+        #     pass
 
         status.update(ret)
         status.update({
