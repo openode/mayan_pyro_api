@@ -18,32 +18,6 @@ from sources.models import SourceTransformation
 ################################################################################
 ################################################################################
 
-MAX_TIMEOUT = 60
-
-
-class TimeoutError(Exception):
-    pass
-
-
-def timeout(seconds=10, error_message=os.strerror(errno.ETIME)):
-
-    def decorator(func):
-        def _handle_timeout(signum, frame):
-            raise TimeoutError(error_message)
-
-        def wrapper(*args, **kwargs):
-            signal.signal(signal.SIGALRM, _handle_timeout)
-            signal.alarm(seconds)
-            try:
-                result = func(*args, **kwargs)
-            finally:
-                signal.alarm(0)
-            return result
-
-        return wraps(func)(wrapper)
-
-    return decorator
-
 
 class DocumentAPI(object):
     """
@@ -154,10 +128,6 @@ class DocumentAPI(object):
 
     ###################################
 
-    @timeout(MAX_TIMEOUT)
-    def _create_mayan_document(self, document, f):
-        return document.new_version(file=f)
-
     @transaction.commit_on_success
     def upload_document(self, document, uuid):
 
@@ -188,17 +158,9 @@ class DocumentAPI(object):
             # create document version (it create thumbnails, ...)
             try:
                 f = File(tmp_file, name=uuid)
-                new_version = self._create_mayan_document(document, f)
-                # new_version = document.new_version(file=f)
+                # new_version = self._create_mayan_document(document, f)
+                new_version = document.new_version(file=f)
                 f.close()
-
-            except TimeoutError, e:
-                self.logger.error("Error [%s]: %s | %s" % (
-                    type(e),
-                    str(e),
-                    repr({"uuid": uuid})
-                ))
-                return status
 
             except Exception, e:
                 self.logger.error("%s: %s" % (type(e), str(e)))
