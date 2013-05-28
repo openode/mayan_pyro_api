@@ -8,6 +8,7 @@ from django.core.files import File
 from django.db import transaction
 from django.contrib.auth.models import User
 
+from converter.exceptions import UnknownFileFormat
 from documents.models import Document, RecentDocument
 from sources.models import SourceTransformation
 
@@ -54,9 +55,13 @@ class DocumentAPI(object):
             # self.files[key] = open(img_path)
             # return self.files[key].read()
 
+        except UnknownFileFormat:
+            pass
+
         except Exception, e:
             self.logger.error("Error [%s]: %s" % (type(e), str(e)))
-            return None
+
+        return None
 
     def retrive_thumbnails(self, uuid, page):
         """
@@ -133,34 +138,39 @@ class DocumentAPI(object):
         # If problems, change this method to some better, for example: rsync, scp.
         handle, tmp_path = tempfile.mkstemp()
         os.close(handle)
-        output_descriptor = open(tmp_path, "w+")
-        output_descriptor.write(document)
 
-        # create document in DB
-        document = Document.objects.create()
-        document.uuid = uuid
-        Document.objects.filter(pk=document.pk).update(uuid=uuid)
+        with open(tmp_path, "w+") as tmp_file:
 
-        # add document for all users
-        for user in User.objects.iterator():
-            RecentDocument.objects.add_document_for_user(user, document)
+            # tmp_file.write(document)
 
-        # create document version (it create thumbnails, ...)
-        try:
-            new_version = document.new_version(
-                file=File(output_descriptor, name=uuid)
-            )
-        except Exception, e:
-            self.logger.error("%s: %s" % (type(e), str(e)))
-            # Don't leave the database in a broken state
-            # document.delete()
-            transaction.rollback()
-            output_descriptor.flush()
-            output_descriptor.close()
-            return status
-        finally:
-            output_descriptor.flush()
-            output_descriptor.close()
+            # create document in DB
+            document = Document.objects.create()
+            document.uuid = uuid
+            Document.objects.filter(pk=document.pk).update(uuid=uuid)
+
+            # add document for all users
+            for user in User.objects.iterator():
+                RecentDocument.objects.add_document_for_user(user, document)
+
+            # create document version (it create thumbnails, ...)
+            try:
+                f = File(tmp_file, name=uuid)
+                f.write(document)
+                new_version = document.new_version(file=f)
+                f.close()
+
+            except Exception, e:
+                self.logger.error("%s: %s" % (type(e), str(e)))
+                # Don't leave the database in a broken state
+                # document.delete()
+                transaction.rollback()
+                tmp_file.flush()
+                tmp_file.close()
+                return status
+
+            finally:
+                tmp_file.flush()
+                tmp_file.close()
 
         pages_count = document.pages.count()
         size = self.get_file_size(tmp_path)
