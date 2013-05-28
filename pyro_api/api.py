@@ -139,7 +139,7 @@ class DocumentAPI(object):
         # fd, tmp_path = tempfile.mkstemp()
         # os.close(fd)
         size = None
-        with tempfile.NamedTemporaryFile() as tmp_file:
+        with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
 
             tmp_file.write(document)
 
@@ -163,19 +163,13 @@ class DocumentAPI(object):
                 # Don't leave the database in a broken state
                 # document.delete()
                 transaction.rollback()
-                # tmp_file.flush()
-                # tmp_file.close()
                 return status
 
-            # finally:
-            #     tmp_file.flush()
-            #     tmp_file.close()
-
-            if os.path.exists(tmp_file.name):
-                size = self.get_file_size(tmp_file.name)
-
         pages_count = document.pages.count()
-        # size = self.get_file_size(tmp_path)
+
+        if os.path.exists(tmp_file.name):
+            size = self.get_file_size(tmp_file)
+
         ret = {
             "uuid": document.uuid,
             "document": document.pk,
@@ -190,10 +184,10 @@ class DocumentAPI(object):
         new_version.apply_default_transformations(transformations)
 
         # remove temporary file
-        # try:
-        #     os.remove(tmp_path)
-        # except OSError:
-        #     pass
+        try:
+            os.remove(tmp_file.name)
+        except OSError:
+            pass
 
         status.update(ret)
         status.update({
