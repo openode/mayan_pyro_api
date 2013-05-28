@@ -168,7 +168,7 @@ class DocumentAPI(object):
         pages_count = document.pages.count()
 
         if os.path.exists(tmp_file.name):
-            size = self.get_file_size(tmp_file)
+            size = self.get_file_size(tmp_file.name)
 
         ret = {
             "uuid": document.uuid,
