@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from collections import Counter
 import errno
 from functools import wraps
 import logging
@@ -10,6 +11,9 @@ import tempfile
 from django.core.files import File
 from django.db import transaction
 from django.contrib.auth.models import User
+
+from ocr.models import DocumentQueue
+from ocr.literals import DOCUMENTQUEUE_STATE_STOPPED, DOCUMENTQUEUE_STATE_ACTIVE
 
 from converter.exceptions import UnknownFileFormat
 from documents.models import Document, RecentDocument
@@ -199,6 +203,60 @@ class DocumentAPI(object):
         })
 
         return status
+
+    ###################################
+    # Queue
+    ###################################
+
+    def get_documents_in_queue(self):
+        ret = []
+        for dq in DocumentQueue.objects.all():
+
+            queue = Counter()
+            for d in dq.queuedocument_set.all():
+                queue[d.get_state_display()] += 1
+
+            ret.append({
+                "state": dq.get_state_display(),
+                "name": dq.name,
+                "queue": dict(queue),
+                "pk": dq.pk
+            })
+        return ret
+
+    def clean_queue(self, pk):
+        self.logger.info("Start manualy empty queue: %s" % repr({"pk": pk}))
+
+        ret = {
+            "error": None,
+            "success": False
+        }
+        dq = None
+        try:
+            dq = DocumentQueue.objects.get(pk=pk)
+            dq.state = DOCUMENTQUEUE_STATE_STOPPED
+            dq.save()
+
+            queue_documents = dq.queuedocument_set.all()
+            self.logger.info(
+                "Try to remove %s document from queue %s." % (queue_documents.count(), dq.name)
+            )
+            for queue_document in queue_documents:
+                queue_document.delete()
+
+            ret.update({
+                "success": True
+            })
+        except Exception, e:
+            ret.update({
+                "error": e
+            })
+            self.logger.error("Error during manualy empty queue: %s" % repr(e))
+        finally:
+            dq.state = DOCUMENTQUEUE_STATE_ACTIVE
+            dq.save()
+
+        return ret
 
     ###################################
 
