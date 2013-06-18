@@ -213,14 +213,21 @@ class DocumentAPI(object):
         for dq in DocumentQueue.objects.all():
 
             queue = Counter()
+            files = []
             for d in dq.queuedocument_set.all():
                 queue[d.get_state_display()] += 1
+                files.append([
+                    d.document.latest_version.mimetype,
+                    d.document.latest_version.timestamp,
+                    d.get_state_display()
+                ])
 
             ret.append({
                 "state": dq.get_state_display(),
                 "name": dq.name,
                 "queue": dict(queue),
-                "pk": dq.pk
+                "pk": dq.pk,
+                "files": files
             })
         return ret
 
