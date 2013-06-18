@@ -12,7 +12,7 @@ from django.core.files import File
 from django.db import transaction
 from django.contrib.auth.models import User
 
-from ocr.models import DocumentQueue
+from ocr.models import DocumentQueue, QueueDocument
 from ocr.literals import DOCUMENTQUEUE_STATE_STOPPED, DOCUMENTQUEUE_STATE_ACTIVE
 
 from converter.exceptions import UnknownFileFormat
@@ -120,6 +120,26 @@ class DocumentAPI(object):
 
     ###################################
 
+    def requeue(self, qd_pk):
+        """
+            requeue document in document-queue
+        """
+        try:
+            qd = QueueDocument.objects.get(pk=qd_pk)
+            qd.requeue()
+            ret = {
+                "success": True,
+                "error": None
+            }
+        except Exception, e:
+            ret = {
+                "success": False,
+                "error": str(e)
+            }
+        return ret
+
+    ###################################
+
     def get_page_count(self, uuid):
         """
             @return: pages count od document
@@ -216,11 +236,13 @@ class DocumentAPI(object):
             files = []
             for d in dq.queuedocument_set.all():
                 queue[d.get_state_display()] += 1
-                files.append([
-                    d.document.latest_version.mimetype,
-                    d.document.latest_version.timestamp,
-                    d.get_state_display()
-                ])
+                files.append({
+                    "timestamp": d.document.latest_version.timestamp.strftime('%Y/%m/%d %H:%M:%S'),
+                    "filesize": d.document.latest_version.file.size,
+                    "mimetype": d.document.latest_version.mimetype,
+                    "state": d.get_state_display(),
+                    "pk": d.pk,
+                })
 
             ret.append({
                 "state": dq.get_state_display(),
