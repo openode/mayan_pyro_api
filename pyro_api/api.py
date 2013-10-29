@@ -100,10 +100,16 @@ class DocumentAPI(object):
         """
             @return: list of thumbnail's content of document's all pages
         """
-        try:
-            document = Document.objects.get(uuid=uuid)
-        except Document.DoesNotExist:
+        documents = Document.objects.filter(uuid=uuid).order_by("-date_added")
+        if not documents:
             return default
+
+        if len(documents) > 1:
+            self.logger.info("retrive_plaintext - MultipleObjectsReturned: %s" % {
+                "uuid": uuid,
+                "page": page
+            })
+        document = documents[0]
 
         content = []
 
