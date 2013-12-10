@@ -1,5 +1,5 @@
-mayan_pyro_api
-==============
+OPENode and Mayan connector
+===========================
 
 Connector for Mayan and Openode project.
 
