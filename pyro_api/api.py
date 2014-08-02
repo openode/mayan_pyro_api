@@ -94,6 +94,27 @@ class DocumentAPI(object):
             self.logger.error("Error [%s]: %s" % (type(e), str(e)))
             return None
 
+    def retrive_document(self, uuid):
+        """
+            @return: document.open()
+        """
+
+        key = "%s" % (uuid)
+
+        try:
+            document = Document.objects.get(uuid=uuid)
+        except Document.DoesNotExist:
+            self.logger.info("Not found %s" % (uuid))
+            return None
+
+        try:
+            self.file = document.open()
+            return self.file.read()
+
+        except Exception, e:
+            self.logger.error("Error [%s]: %s" % (type(e), str(e)))
+            return None
+
     ###################################
 
     def retrive_plaintext(self, uuid, page=None, default=""):
